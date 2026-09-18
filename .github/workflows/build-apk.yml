@@ -1,0 +1,86 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: apps/allies
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - run: npm ci
+        working-directory: .
+
+      - name: Build Next.js
+        run: npm run build
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Ensure release keystore
+        run: |
+          if [ ! -f android/app/release.keystore ]; then
+            keytool -genkeypair -v \
+              -keystore android/app/release.keystore \
+              -alias release \
+              -keyalg RSA -keysize 2048 -validity 9125 \
+              -storetype JKS -storepass android -keypass android \
+              -dname "CN=Allies, OU=App, O=Allies, L=NA, ST=NA, C=IN"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -f android/app/release.keystore
+            git commit -m "chore: add release signing keystore"
+            git push
+            exit 0
+          fi
+
+      - name: Build APK
+        run: |
+          npx cap sync android
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
+      - name: Rename APK
+        run: cp android/app/build/outputs/apk/release/*.apk ../../Allies.apk
+
+      - name: Read version
+        id: version
+        run: echo "version=$(node scripts/ci-version.cjs)" >> "$GITHUB_OUTPUT"
+
+      - name: Publish Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v${{ steps.version.outputs.version }}
+        run: |
+          cd ../..
+          gh release view "$TAG" >/dev/null 2>&1 && gh release delete "$TAG" --yes --cleanup-tag || true
+          gh release create "$TAG" Allies.apk \
+            --title "Allies $TAG" \
+            --notes "New version of Allies. Download the APK below and install it on your device." \
+            --latest
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: allies-apk
+          path: Allies.apk
