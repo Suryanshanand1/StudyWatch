@@ -1,0 +1,7 @@
+{
+  "name": "allies",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ]
+}

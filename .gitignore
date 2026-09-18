@@ -1,0 +1,19 @@
+node_modules/
+.next/
+out/
+dist/
+build/
+.env
+.env.local
+*.log
+.DS_Store
+android/app/release.keystore
+supabase/.temp/
+
+# capacitor / android build outputs (the android/ project itself is committed)
+android/.gradle/
+android/build/
+android/local.properties
+android/app/build/
+android/captures/
+android/.externalNativeBuild/

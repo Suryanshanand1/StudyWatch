@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Allies</string>
+    <string name="title_activity_main">Allies</string>
+    <string name="package_name">com.allies.app</string>
+    <string name="custom_url_scheme">com.allies.app</string>
+</resources>

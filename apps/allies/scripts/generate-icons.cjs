@@ -1,0 +1,23 @@
+const sharp = require("sharp")
+const path = require("node:path")
+
+const sizes = [192, 512]
+
+async function main() {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <rect width="100" height="100" rx="22" fill="#0b0b0d"/>
+    <circle cx="50" cy="52" r="26" fill="none" stroke="#fbbf24" stroke-width="7"/>
+    <line x1="50" y1="52" x2="50" y2="38" stroke="#fbbf24" stroke-width="6" stroke-linecap="round"/>
+    <line x1="50" y1="52" x2="60" y2="58" stroke="#fbbf24" stroke-width="6" stroke-linecap="round"/>
+  </svg>`
+
+  for (const size of sizes) {
+    await sharp(Buffer.from(svg))
+      .resize(size, size)
+      .png()
+      .toFile(path.join(__dirname, "..", "public", `icon-${size}.png`))
+    console.log(`Generated icon-${size}.png`)
+  }
+}
+
+main().catch(console.error)
